@@ -1,0 +1,1 @@
+Requires `pip install git+https://github.com/equinor/xtgeo.git@refs/pull/770/head` for converting from roff to VTK.
