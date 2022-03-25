@@ -8,6 +8,9 @@ from dash_vtk.utils import to_mesh_state
 from webviz_config._plugin_abc import WebvizPluginABC
 from webviz_subsurface._utils.perf_timer import PerfTimer
 
+from vtkmodules.vtkFiltersGeometry import vtkGeometryFilter
+from vtkmodules.vtkFiltersGeometry import vtkExplicitStructuredGridSurfaceFilter
+
 TIMER = PerfTimer()
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -28,7 +31,13 @@ class MeshApp(WebvizPluginABC):
         time_it("Initializing app")
 
         self.grid = pyvista.read(vtu_file)
-        time_it("Read unstructured grid")
+        time_it(f"Read unstructured grid, type={type(self.grid)}")
+
+        TIMER.lap_s()
+        self.grid = self.grid.cast_to_explicit_structured_grid()
+        self.grid.ComputeFacesConnectivityFlagsArray()
+        time_it("Cast to ExplicitStructuredGrid")
+
 
         @callback(
             Output("vtk-mesh", "state"),
@@ -38,8 +47,28 @@ class MeshApp(WebvizPluginABC):
         def _update(nclicks):
             # Flipping z to trigger a change
             self.grid.flip_z(inplace=True)
+
             TIMER.lap_s()
-            mesh_state = to_mesh_state(self.grid, field_to_keep="scalar")
+
+            if self.grid.IsA("vtkUnstructuredGrid"):
+                print("it is a vtkUnstructuredGrid")
+                extractSkinFilter = vtkGeometryFilter()
+            elif self.grid.IsA("vtkExplicitStructuredGrid"):
+                print("it is a vtkExplicitStructuredGrid")
+                extractSkinFilter = vtkExplicitStructuredGridSurfaceFilter()
+            else:
+                print("TROUBLE!!!!!!!!!!!!!!!")
+
+            print("Num grid cells: ", self.grid.GetNumberOfCells())
+
+            extractSkinFilter.SetInputData(self.grid)
+            extractSkinFilter.Update()
+            polydata = extractSkinFilter.GetOutput()
+
+            time_it("CREATE POLYDATA")
+
+            TIMER.lap_s()
+            mesh_state = to_mesh_state(polydata, field_to_keep="scalar")
             time_it("TO MESH STATE")
             return mesh_state, nclicks
 
