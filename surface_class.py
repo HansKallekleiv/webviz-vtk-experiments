@@ -37,7 +37,7 @@ class SurfaceApp(WebvizPluginABC):
         self.value_range = [np.min(surface.values), np.max(surface.values)]
         time_it("Read xtgeo surface")
 
-        surface.coarsen(4)
+        # surface.coarsen(4)
         time_it("Reduce resolution")
 
         xi, yi = surface.get_xy_values(asmasked=False)
@@ -107,7 +107,7 @@ class SurfaceApp(WebvizPluginABC):
                             children=[
                                 dash_vtk.Mesh(id="vtk-mesh", state={}),
                             ],
-                            property={"edgeVisibility": False},
+                            property={"edgeVisibility": True},
                             colorDataRange=self.value_range,
                         ),
                         dash_vtk.GeometryRepresentation(
