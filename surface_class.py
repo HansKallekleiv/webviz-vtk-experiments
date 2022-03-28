@@ -65,22 +65,7 @@ class SurfaceApp(WebvizPluginABC):
             time_it("Make contours")
 
             mesh_state = to_mesh_state(self.sgrid, field_to_keep="Elevation")
-            polydata = self.sgrid.extract_surface()
-            polys = vtk_to_numpy(polydata.GetPolys().GetData())
-            points = polydata.points.ravel()
-            scalar = polydata["Elevation"]
 
-            import json
-
-            with open("polysurface.json", "w") as f:
-                json.dump(
-                    {
-                        "polys": polys.tolist(),
-                        "points": points.tolist(),
-                        "scalar": scalar.tolist(),
-                    },
-                    f,
-                )
             time_it("TO MESH STATE")
             contours_mesh_state = to_mesh_state(contours, field_to_keep="Elevation")
             time_it("CONTOURS TO MESH STATE")
